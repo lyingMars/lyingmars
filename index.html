@@ -88,49 +88,54 @@
       }
     });
 
-    function createDrop(x, y) {
-      const drop = document.createElement("div");
-      drop.classList.add("drop");
-      box.appendChild(drop);
+function createDrop(x, y) {
+  const drop = document.createElement("div");
+  drop.textContent = "💩";
+  drop.style.position = "absolute";
+  drop.style.pointerEvents = "none";
+  drop.style.fontSize = "16px";
+  drop.style.left = x + "px";
+  drop.style.top = y + "px";
+  box.appendChild(drop);
 
-      let start = null;
-      const duration = 2000;
-      const startX = x;
-      const startY = y;
-      const curveX = -4;
-      const curveY = 7;
+  let start = null;
+  const duration = 2000;
+  const endX = x - 10;
+  const endY = y + 30;
 
-      function animateDrop(timestamp) {
-        if (!start) start = timestamp;
-        const elapsed = timestamp - start;
-        const progress = Math.min(elapsed / duration, 1);
+  function animateDrop(timestamp) {
+    if (!start) start = timestamp;
+    const progress = Math.min((timestamp - start) / duration, 1);
 
-        drop.style.left = startX + curveX * progress + "px";
-        drop.style.top = startY + curveY * progress + "px";
+    const currentX = x + (endX - x) * progress;
+    const currentY = y + (endY - y) * progress;
 
-        // Collision check
-        const dropRect = drop.getBoundingClientRect();
-        document.querySelectorAll('.cactus').forEach(cactus => {
-          const cactusRect = cactus.getBoundingClientRect();
-          if (
-            dropRect.left < cactusRect.right &&
-            dropRect.right > cactusRect.left &&
-            dropRect.top < cactusRect.bottom &&
-            dropRect.bottom > cactusRect.top
-          ) {
-            cactus.remove();
-          }
-        });
+    drop.style.left = currentX + "px";
+    drop.style.top = currentY + "px";
 
-        if (progress < 1) {
-          requestAnimationFrame(animateDrop);
-        } else {
-          drop.remove();
-        }
-      }
-
+    if (progress < 1) {
       requestAnimationFrame(animateDrop);
+    } else {
+      // Final collision check
+      const dropRect = drop.getBoundingClientRect();
+      document.querySelectorAll('.cactus').forEach(cactus => {
+        const cactusRect = cactus.getBoundingClientRect();
+        if (
+          dropRect.left < cactusRect.right &&
+          dropRect.right > cactusRect.left &&
+          dropRect.top < cactusRect.bottom &&
+          dropRect.bottom > cactusRect.top
+        ) {
+          cactus.remove();
+        }
+      });
+
+      drop.remove();
     }
+  }
+
+  requestAnimationFrame(animateDrop);
+}
 
     box.addEventListener("mousemove", (e) => {
       const rect = box.getBoundingClientRect();
