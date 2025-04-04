@@ -20,10 +20,31 @@
       position: relative;
       overflow: hidden;
     }
+    .bird {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      pointer-events: auto;
+      cursor: pointer;
+    }
     #gary {
       position: absolute;
-      width: 100px; /* Adjust size as needed */
+      width: 100px;
       height: 100px;
+      pointer-events: none;
+    }
+    .cactus {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: green;
+    }
+    .drop {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background-color: brown;
+      border-radius: 50%;
       pointer-events: none;
     }
   </style>
@@ -31,29 +52,107 @@
 <body>
   <div id="box">
     <img id="gary" src="gary.png" alt="Gary">
+    <img id="bob" class="bird" src="bob.png" alt="Bob" style="top: 0; left: 0;">
+    <img id="steven" class="bird" src="steven.png" alt="Steven" style="bottom: 0; right: 0;">
   </div>
 
   <script>
     const box = document.getElementById("box");
     const gary = document.getElementById("gary");
+    const bob = document.getElementById("bob");
+    const steven = document.getElementById("steven");
+
+    let activeBird = gary;
+
+    function randomCactus() {
+      const cactus = document.createElement("div");
+      cactus.classList.add("cactus");
+      cactus.style.left = Math.floor(Math.random() * (box.clientWidth - 10)) + "px";
+      cactus.style.top = Math.floor(Math.random() * (box.clientHeight - 10)) + "px";
+      box.appendChild(cactus);
+
+      setTimeout(() => cactus.remove(), 30000);
+    }
+
+    setInterval(randomCactus, 500);
+
+    bob.addEventListener("click", () => {
+      if (activeBird !== bob) {
+        activeBird = bob;
+      }
+    });
+
+    steven.addEventListener("click", () => {
+      if (activeBird !== steven) {
+        activeBird = steven;
+      }
+    });
+
+    function createDrop(x, y) {
+      const drop = document.createElement("div");
+      drop.classList.add("drop");
+      box.appendChild(drop);
+
+      let start = null;
+      const duration = 2000;
+      const startX = x;
+      const startY = y;
+      const curveX = -4;
+      const curveY = 7;
+
+      function animateDrop(timestamp) {
+        if (!start) start = timestamp;
+        const elapsed = timestamp - start;
+        const progress = Math.min(elapsed / duration, 1);
+
+        drop.style.left = startX + curveX * progress + "px";
+        drop.style.top = startY + curveY * progress + "px";
+
+        // Collision check
+        const dropRect = drop.getBoundingClientRect();
+        document.querySelectorAll('.cactus').forEach(cactus => {
+          const cactusRect = cactus.getBoundingClientRect();
+          if (
+            dropRect.left < cactusRect.right &&
+            dropRect.right > cactusRect.left &&
+            dropRect.top < cactusRect.bottom &&
+            dropRect.bottom > cactusRect.top
+          ) {
+            cactus.remove();
+          }
+        });
+
+        if (progress < 1) {
+          requestAnimationFrame(animateDrop);
+        } else {
+          drop.remove();
+        }
+      }
+
+      requestAnimationFrame(animateDrop);
+    }
 
     box.addEventListener("mousemove", (e) => {
       const rect = box.getBoundingClientRect();
       let x = e.clientX - rect.left;
       let y = e.clientY - rect.top;
 
-      // Constrain within box
-      const garyWidth = gary.offsetWidth;
-      const garyHeight = gary.offsetHeight;
-      x = Math.max(0, Math.min(x, box.clientWidth - garyWidth));
-      y = Math.max(0, Math.min(y, box.clientHeight - garyHeight));
+      const birdWidth = activeBird.offsetWidth;
+      const birdHeight = activeBird.offsetHeight;
 
-      gary.style.left = x + "px";
-      gary.style.top = y + "px";
+      x = Math.max(0, Math.min(x, box.clientWidth - birdWidth));
+      y = Math.max(0, Math.min(y, box.clientHeight - birdHeight));
+
+      activeBird.style.left = x + "px";
+      activeBird.style.top = y + "px";
     });
-  </script>
-</body>
-</html>
+
+    box.addEventListener("click", (e) => {
+      const rect = box.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      createDrop(x, y);
+    });
   </script>
 </body>
 </html>
