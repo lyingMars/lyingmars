@@ -237,7 +237,7 @@
       const endX = x + dx;
       const endY = y + dy;
 
-      function animateDrop(timestamp) {
+        function animateDrop(timestamp) {
         if (!start) start = timestamp;
         const progress = Math.min((timestamp - start) / duration, 1);
         const currX = x + (endX - x) * progress;
@@ -247,30 +247,36 @@
         drop.style.top = `${currY}px`;
 
         if (progress < 1) {
-          requestAnimationFrame(animateDrop);
+            requestAnimationFrame(animateDrop);
         } else {
-          const dropRect = drop.getBoundingClientRect();
-          document.querySelectorAll('.cactus, .mob').forEach(obj => {
-            const rect = obj.getBoundingClientRect();
-            if (
-              dropRect.left < rect.right &&
-              dropRect.right > rect.left &&
-              dropRect.top < rect.bottom &&
-              dropRect.bottom > rect.top
-            ) {
-              if (obj.classList.contains("cactus") && points < maxPoints) {
-                points++;
-                updatePointsBar();
-              }
-              obj.remove();
-            }
-          });
-          drop.remove();
-        }
-      }
+            const dropRect = drop.getBoundingClientRect();
+            document.querySelectorAll('.cactus, .mob, .item').forEach(obj => {
+                const rect = obj.getBoundingClientRect();
+                if (
+                    dropRect.left < rect.right &&
+                    dropRect.right > rect.left &&
+                    dropRect.top < rect.bottom &&
+                    dropRect.bottom > rect.top
+                ) {
+                    if (obj.classList.contains("cactus") && points < maxPoints) {
+                        points++;
+                        updatePointsBar();
+                    }
 
-      requestAnimationFrame(animateDrop);
+                    if (obj.classList.contains("item") && obj.src.includes("pistach.png")) {
+                        health = Math.min(100, health + 50); // Heal 50 HP, max HP is 100
+                        updateHealthBar();
+                    }
+
+                    obj.remove();
+                }
+            });
+            drop.remove();
+        }
     }
+
+    requestAnimationFrame(animateDrop);
+}
 
     document.addEventListener("keydown", (e) => {
       if (paused) return;
