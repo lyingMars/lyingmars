@@ -8,7 +8,7 @@
       background-color: #eee;
       margin: 0;
       overflow: hidden;
-      cursor: none; /* Make mouse invisible */
+      cursor: none;
     }
     #wrapper {
       width: 100vw;
@@ -64,6 +64,8 @@
     const steven = document.getElementById("steven");
 
     let activeBird = mainBird;
+    let birdX = 0;
+    let birdY = 0;
 
     function randomCactus() {
       const cactus = document.createElement("img");
@@ -140,42 +142,44 @@
 
     box.addEventListener("mousemove", (e) => {
       const rect = box.getBoundingClientRect();
-      let x = e.clientX - rect.left + wrapper.scrollLeft;
-      let y = e.clientY - rect.top + wrapper.scrollTop;
+      birdX = e.clientX - rect.left + wrapper.scrollLeft;
+      birdY = e.clientY - rect.top + wrapper.scrollTop;
 
       const birdWidth = activeBird.offsetWidth;
       const birdHeight = activeBird.offsetHeight;
 
-      x = Math.max(0, Math.min(x, box.clientWidth - birdWidth));
-      y = Math.max(0, Math.min(y, box.clientHeight - birdHeight));
+      birdX = Math.max(0, Math.min(birdX, box.clientWidth - birdWidth));
+      birdY = Math.max(0, Math.min(birdY, box.clientHeight - birdHeight));
 
-      activeBird.style.left = x + "px";
-      activeBird.style.top = y + "px";
+      activeBird.style.left = birdX + "px";
+      activeBird.style.top = birdY + "px";
 
-      // Auto-scroll logic
-      const edge = 50;
+      // Edge scrolling logic when bird is 200px from box edge
+      const edgeDistance = 200;
       const scrollSpeed = 20;
 
-      if (e.clientX < edge) {
-        wrapper.scrollLeft -= scrollSpeed;
-      } else if (e.clientX > window.innerWidth - edge) {
-        wrapper.scrollLeft += scrollSpeed;
+      if (birdX - wrapper.scrollLeft < edgeDistance) {
+        wrapper.scrollLeft = Math.max(0, wrapper.scrollLeft - scrollSpeed);
+      } else if (birdX - wrapper.scrollLeft > wrapper.clientWidth - edgeDistance) {
+        wrapper.scrollLeft = Math.min(box.scrollWidth, wrapper.scrollLeft + scrollSpeed);
       }
 
-      if (e.clientY < edge) {
-        wrapper.scrollTop -= scrollSpeed;
-      } else if (e.clientY > window.innerHeight - edge) {
-        wrapper.scrollTop += scrollSpeed;
+      if (birdY - wrapper.scrollTop < edgeDistance) {
+        wrapper.scrollTop = Math.max(0, wrapper.scrollTop - scrollSpeed);
+      } else if (birdY - wrapper.scrollTop > wrapper.clientHeight - edgeDistance) {
+        wrapper.scrollTop = Math.min(box.scrollHeight, wrapper.scrollTop + scrollSpeed);
       }
     });
 
-    box.addEventListener("click", (e) => {
-      const rect = box.getBoundingClientRect();
-      const x = e.clientX - rect.left + wrapper.scrollLeft;
-      const y = e.clientY - rect.top + wrapper.scrollTop;
-      createDrop(x, y);
+    document.addEventListener("keydown", (e) => {
+      if (e.code === "Space") {
+        e.preventDefault(); // prevents page from scrolling
+        createDrop(birdX, birdY);
+      }
     });
   </script>
 </body>
+</html>
+
 </html>
 
