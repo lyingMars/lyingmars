@@ -10,14 +10,12 @@
       overflow: hidden;
       cursor: crosshair;
     }
-
     #wrapper {
       width: 100vw;
       height: 100vh;
       overflow: scroll;
       position: relative;
     }
-
     #box {
       width: 20000px;
       height: 20000px;
@@ -25,7 +23,6 @@
       border: 1px solid black;
       position: relative;
     }
-
     .hud-bird {
       position: fixed;
       width: 200px;
@@ -36,27 +33,23 @@
       pointer-events: none;
       z-index: 10;
     }
-
     .bird-select, .item, .mob {
       position: absolute;
       width: 100px;
       height: 100px;
       cursor: pointer;
     }
-
     .cactus {
       position: absolute;
       width: 100px;
       height: 100px;
       pointer-events: none;
     }
-
     .drop {
       position: absolute;
       pointer-events: none;
       font-size: 25px;
     }
-
     #pointsContainer {
       position: fixed;
       top: 20px;
@@ -67,14 +60,12 @@
       border: 1px solid #888;
       z-index: 999;
     }
-
     #pointsBar {
       height: 100%;
       width: 0%;
       background-color: red;
       transition: width 0.2s ease;
     }
-
     #healthContainer {
       position: fixed;
       bottom: 20px;
@@ -86,7 +77,6 @@
       border: 1px solid #888;
       z-index: 999;
     }
-
     #healthBar {
       height: 100%;
       width: 100%;
@@ -96,19 +86,15 @@
   </style>
 </head>
 <body>
-
   <div id="pointsContainer"><div id="pointsBar"></div></div>
   <div id="healthContainer"><div id="healthBar"></div></div>
-
   <div id="wrapper">
     <div id="box">
       <img id="bob" class="bird-select" src="bob.png" alt="Bob" style="top: 0; left: 0;">
       <img id="steven" class="bird-select" src="Steven.png" alt="Steven" style="bottom: 0; right: 0;">
     </div>
   </div>
-
   <img id="activeBird" class="hud-bird" src="normal.bord.gif" alt="Main Bird">
-
   <script>
     const wrapper = document.getElementById("wrapper");
     const box = document.getElementById("box");
@@ -166,12 +152,6 @@
       item.style.left = `${x}px`;
       item.style.top = `${y}px`;
       box.appendChild(item);
-
-      item.addEventListener("click", () => {
-        item.remove();
-        aimingEnabled = true;
-      });
-
       setTimeout(() => item.remove(), 60000);
     }
 
@@ -218,7 +198,6 @@
         const progress = Math.min((timestamp - start) / duration, 1);
         const currX = x + (endX - x) * progress;
         const currY = y + (endY - y) * progress;
-
         drop.style.left = `${currX}px`;
         drop.style.top = `${currY}px`;
 
@@ -244,7 +223,6 @@
           drop.remove();
         }
       }
-
       requestAnimationFrame(animateDrop);
     }
 
@@ -281,26 +259,38 @@
       wrapper.scrollLeft = camX;
       wrapper.scrollTop = camY;
 
-      // Make cats move toward bird
+      const centerX = wrapper.clientWidth / 2;
+      const centerY = wrapper.clientHeight / 2;
+
       document.querySelectorAll('.mob').forEach(cat => {
         const catX = parseFloat(cat.style.left);
         const catY = parseFloat(cat.style.top);
-        const targetX = wrapper.scrollLeft + wrapper.clientWidth / 2;
-        const targetY = wrapper.scrollTop + wrapper.clientHeight / 2;
-        const dx = targetX - catX;
-        const dy = targetY - catY;
+        const dx = (wrapper.scrollLeft + centerX) - catX;
+        const dy = (wrapper.scrollTop + centerY) - catY;
         const dist = Math.hypot(dx, dy);
-        const speed = 0.7;
         if (dist > 1) {
+          const speed = 0.7;
           cat.style.left = `${catX + dx / dist * speed}px`;
           cat.style.top = `${catY + dy / dist * speed}px`;
+        }
+      });
+
+      document.querySelectorAll('.item').forEach(item => {
+        const rect = item.getBoundingClientRect();
+        if (
+          centerX > rect.left &&
+          centerX < rect.right &&
+          centerY > rect.top &&
+          centerY < rect.bottom
+        ) {
+          item.remove();
+          aimingEnabled = true;
         }
       });
 
       requestAnimationFrame(gameLoop);
     }
 
-    // Damage check every 0.5s
     setInterval(() => {
       const centerX = wrapper.clientWidth / 2;
       const centerY = wrapper.clientHeight / 2;
@@ -327,6 +317,4 @@
     gameLoop();
   </script>
 </body>
-</html>
-
 </html>
