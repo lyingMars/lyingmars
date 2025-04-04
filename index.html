@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Mouse Follower</title>
+  <title>Steven Adventure</title>
   <style>
     body {
-      background-color: #eee;
       margin: 0;
+      background-color: #eee;
       overflow: hidden;
       cursor: none;
     }
@@ -14,6 +14,7 @@
       width: 100vw;
       height: 100vh;
       overflow: scroll;
+      position: relative;
     }
     #box {
       width: 2000px;
@@ -23,12 +24,6 @@
       position: relative;
     }
     .bird {
-      position: absolute;
-      width: 100px;
-      height: 100px;
-      cursor: pointer;
-    }
-    #mainBird {
       position: absolute;
       width: 100px;
       height: 100px;
@@ -50,30 +45,49 @@
 <body>
   <div id="wrapper">
     <div id="box">
-      <img id="mainBird" src="normal.bord.gif" alt="Main Bird">
-      <img id="bob" class="bird" src="bob.png" alt="Bob" style="top: 0; left: 0;">
-      <img id="steven" class="bird" src="Steven.png" alt="Steven" style="bottom: 0; right: 0;">
+      <img id="steven" class="bird" src="Steven.png" alt="Steven">
     </div>
   </div>
 
   <script>
     const wrapper = document.getElementById("wrapper");
     const box = document.getElementById("box");
-    const mainBird = document.getElementById("mainBird");
-    const bob = document.getElementById("bob");
     const steven = document.getElementById("steven");
 
-    let activeBird = mainBird;
-    let birdX = 0;
-    let birdY = 0;
+    let camX = box.clientWidth / 2 - wrapper.clientWidth / 2;
+    let camY = box.clientHeight / 2 - wrapper.clientHeight / 2;
+
+    // Place Steven in center of viewport
+    function centerSteven() {
+      steven.style.left = (wrapper.clientWidth / 2 - steven.offsetWidth / 2) + "px";
+      steven.style.top = (wrapper.clientHeight / 2 - steven.offsetHeight / 2) + "px";
+    }
+
+    centerSteven();
+
+    function scrollCamera(dx, dy) {
+      camX = Math.max(0, Math.min(camX + dx, box.clientWidth - wrapper.clientWidth));
+      camY = Math.max(0, Math.min(camY + dy, box.clientHeight - wrapper.clientHeight));
+      wrapper.scrollLeft = camX;
+      wrapper.scrollTop = camY;
+    }
+
+    // WASD + Arrow key controls
+    const keys = {};
+    window.addEventListener("keydown", (e) => {
+      keys[e.key.toLowerCase()] = true;
+    });
+    window.addEventListener("keyup", (e) => {
+      keys[e.key.toLowerCase()] = false;
+    });
 
     function randomCactus() {
       const cactus = document.createElement("img");
       cactus.classList.add("cactus");
       cactus.src = "Cactus.png";
       cactus.alt = "Cactus";
-      cactus.style.left = Math.floor(Math.random() * (box.clientWidth - 10)) + "px";
-      cactus.style.top = Math.floor(Math.random() * (box.clientHeight - 10)) + "px";
+      cactus.style.left = Math.floor(Math.random() * (box.clientWidth - 100)) + "px";
+      cactus.style.top = Math.floor(Math.random() * (box.clientHeight - 100)) + "px";
       box.appendChild(cactus);
 
       setTimeout(() => cactus.remove(), 30000);
@@ -81,39 +95,25 @@
 
     setInterval(randomCactus, 500);
 
-    bob.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (activeBird !== bob) {
-        activeBird = bob;
-      }
-    });
-
-    steven.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (activeBird !== steven) {
-        activeBird = steven;
-      }
-    });
-
-    function createDrop(x, y) {
+    function createDrop() {
       const drop = document.createElement("div");
       drop.classList.add("drop");
       drop.textContent = "💩";
-      drop.style.left = x + "px";
-      drop.style.top = y + "px";
+      drop.style.left = (camX + wrapper.clientWidth / 2 - 10) + "px";
+      drop.style.top = (camY + wrapper.clientHeight / 2 - 10) + "px";
       box.appendChild(drop);
 
       let start = null;
       const duration = 2000;
-      const endX = x - 100;
-      const endY = y + 100;
+      const endX = parseFloat(drop.style.left) - 100;
+      const endY = parseFloat(drop.style.top) + 100;
 
       function animateDrop(timestamp) {
         if (!start) start = timestamp;
         const progress = Math.min((timestamp - start) / duration, 1);
 
-        const currentX = x + (endX - x) * progress;
-        const currentY = y + (endY - y) * progress;
+        const currentX = parseFloat(drop.style.left) + (endX - parseFloat(drop.style.left)) * progress;
+        const currentY = parseFloat(drop.style.top) + (endY - parseFloat(drop.style.top)) * progress;
 
         drop.style.left = currentX + "px";
         drop.style.top = currentY + "px";
@@ -140,46 +140,22 @@
       requestAnimationFrame(animateDrop);
     }
 
-    box.addEventListener("mousemove", (e) => {
-      const rect = box.getBoundingClientRect();
-      birdX = e.clientX - rect.left + wrapper.scrollLeft;
-      birdY = e.clientY - rect.top + wrapper.scrollTop;
-
-      const birdWidth = activeBird.offsetWidth;
-      const birdHeight = activeBird.offsetHeight;
-
-      birdX = Math.max(0, Math.min(birdX, box.clientWidth - birdWidth));
-      birdY = Math.max(0, Math.min(birdY, box.clientHeight - birdHeight));
-
-      activeBird.style.left = birdX + "px";
-      activeBird.style.top = birdY + "px";
-
-      // Edge scrolling logic when bird is 200px from box edge
-      const edgeDistance = 200;
-      const scrollSpeed = 20;
-
-      if (birdX - wrapper.scrollLeft < edgeDistance) {
-        wrapper.scrollLeft = Math.max(0, wrapper.scrollLeft - scrollSpeed);
-      } else if (birdX - wrapper.scrollLeft > wrapper.clientWidth - edgeDistance) {
-        wrapper.scrollLeft = Math.min(box.scrollWidth, wrapper.scrollLeft + scrollSpeed);
-      }
-
-      if (birdY - wrapper.scrollTop < edgeDistance) {
-        wrapper.scrollTop = Math.max(0, wrapper.scrollTop - scrollSpeed);
-      } else if (birdY - wrapper.scrollTop > wrapper.clientHeight - edgeDistance) {
-        wrapper.scrollTop = Math.min(box.scrollHeight, wrapper.scrollTop + scrollSpeed);
-      }
-    });
-
     document.addEventListener("keydown", (e) => {
       if (e.code === "Space") {
-        e.preventDefault(); // prevents page from scrolling
-        createDrop(birdX, birdY);
+        createDrop();
       }
     });
+
+    function gameLoop() {
+      const speed = 10;
+      if (keys["arrowup"] || keys["w"]) scrollCamera(0, -speed);
+      if (keys["arrowdown"] || keys["s"]) scrollCamera(0, speed);
+      if (keys["arrowleft"] || keys["a"]) scrollCamera(-speed, 0);
+      if (keys["arrowright"] || keys["d"]) scrollCamera(speed, 0);
+      requestAnimationFrame(gameLoop);
+    }
+
+    gameLoop();
   </script>
 </body>
 </html>
-
-</html>
-
