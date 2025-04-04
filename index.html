@@ -98,16 +98,24 @@ function randomCactus() {
   cactus.src = "Cactus.png";
   cactus.alt = "Cactus";
 
-  // Viewport-relative random position
-  const padding = 100;
-  const x = wrapper.scrollLeft + Math.random() * (wrapper.clientWidth - padding);
-  const y = wrapper.scrollTop + Math.random() * (wrapper.clientHeight - padding);
+  // Get current visible area
+  const viewX = wrapper.scrollLeft;
+  const viewY = wrapper.scrollTop;
+  const viewWidth = wrapper.clientWidth;
+  const viewHeight = wrapper.clientHeight;
 
-  cactus.style.left = Math.max(0, Math.min(x, box.clientWidth - 100)) + "px";
-  cactus.style.top = Math.max(0, Math.min(y, box.clientHeight - 100)) + "px";
+  // Generate random position within current viewport
+  const x = viewX + Math.random() * (viewWidth - 100);
+  const y = viewY + Math.random() * (viewHeight - 100);
+
+  cactus.style.left = `${x}px`;
+  cactus.style.top = `${y}px`;
   box.appendChild(cactus);
 
+  console.log("Cactus spawned at", x, y);
+
   setTimeout(() => cactus.remove(), 30000);
+}
 
 }
     function createDrop() {
