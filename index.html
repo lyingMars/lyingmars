@@ -130,6 +130,7 @@
     let health = 100;
     let camX = 0;
     let camY = 0;
+    let catSpawnRate = 7000;
 
     const wrapper = document.getElementById("wrapper");
     const box = document.getElementById("box");
@@ -149,7 +150,6 @@
     function updatePointsBar() {
       const percent = (points / 10) * 100;
       pointsBar.style.width = `${Math.min(percent, 100)}%`;
-
       if (points >= 10 && !paused) {
         paused = true;
         popup.style.display = "flex";
@@ -227,6 +227,78 @@
       });
     }
 
+    function spawnCactus() {
+      if (paused) return;
+      const cactus = document.createElement("img");
+      cactus.classList.add("cactus");
+      cactus.src = "Cactus.png";
+      const x = Math.random() * (box.clientWidth - 100);
+      const y = Math.random() * (box.clientHeight - 100);
+      cactus.style.left = `${x}px`;
+      cactus.style.top = `${y}px`;
+      box.appendChild(cactus);
+    }
+
+    function spawnItem(src) {
+      if (paused) return;
+      const item = document.createElement("img");
+      item.classList.add("item");
+      item.src = src;
+      const x = Math.random() * (box.clientWidth - 100);
+      const y = Math.random() * (box.clientHeight - 100);
+      item.style.left = `${x}px`;
+      item.style.top = `${y}px`;
+      box.appendChild(item);
+    }
+
+    function spawnBlackCat() {
+      if (paused) return;
+      const cat = document.createElement("img");
+      cat.classList.add("mob");
+      cat.src = "CATBLACK MOB.gif";
+      const viewX = wrapper.scrollLeft;
+      const viewY = wrapper.scrollTop;
+      const vw = wrapper.clientWidth;
+      const vh = wrapper.clientHeight;
+      const buffer = 400;
+      const side = Math.floor(Math.random() * 4);
+      let x, y;
+      switch (side) {
+        case 0: x = viewX - buffer; y = viewY + Math.random() * vh; break;
+        case 1: x = viewX + vw + buffer; y = viewY + Math.random() * vh; break;
+        case 2: y = viewY - buffer; x = viewX + Math.random() * vw; break;
+        case 3: y = viewY + vh + buffer; x = viewX + Math.random() * vw; break;
+      }
+      cat.style.left = `${x}px`;
+      cat.style.top = `${y}px`;
+      box.appendChild(cat);
+    }
+
+    function trackCatsAndDamage() {
+      const centerX = wrapper.clientWidth / 2;
+      const centerY = wrapper.clientHeight / 2;
+      document.querySelectorAll('.mob').forEach(cat => {
+        const catX = parseFloat(cat.style.left);
+        const catY = parseFloat(cat.style.top);
+        const dx = wrapper.scrollLeft + centerX - catX;
+        const dy = wrapper.scrollTop + centerY - catY;
+        const dist = Math.hypot(dx, dy);
+        const speed = 0.7;
+        if (dist > 1) {
+          cat.style.left = `${catX + dx / dist * speed}px`;
+          cat.style.top = `${catY + dy / dist * speed}px`;
+        }
+        const rect = cat.getBoundingClientRect();
+        if (
+          centerX > rect.left && centerX < rect.right &&
+          centerY > rect.top && centerY < rect.bottom
+        ) {
+          health -= 5;
+          updateHealthBar();
+        }
+      });
+    }
+
     function createDrop(x, y, dx = -100, dy = 100) {
       const drop = document.createElement("div");
       drop.classList.add("drop");
@@ -243,10 +315,8 @@
       function animateDrop(timestamp) {
         if (!start) start = timestamp;
         const progress = Math.min((timestamp - start) / duration, 1);
-        const currX = x + (endX - x) * progress;
-        const currY = y + (endY - y) * progress;
-        drop.style.left = `${currX}px`;
-        drop.style.top = `${currY}px`;
+        drop.style.left = `${x + (endX - x) * progress}px`;
+        drop.style.top = `${y + (endY - y) * progress}px`;
 
         if (progress < 1) {
           requestAnimationFrame(animateDrop);
@@ -270,7 +340,6 @@
           drop.remove();
         }
       }
-
       requestAnimationFrame(animateDrop);
     }
 
@@ -280,13 +349,15 @@
       if (keys["arrowdown"] || keys["s"]) camY += moveSpeed;
       if (keys["arrowleft"] || keys["a"]) camX -= moveSpeed;
       if (keys["arrowright"] || keys["d"]) camX += moveSpeed;
-
       camX = Math.max(0, Math.min(camX, box.clientWidth - wrapper.clientWidth));
       camY = Math.max(0, Math.min(camY, box.clientHeight - wrapper.clientHeight));
       wrapper.scrollLeft = camX;
       wrapper.scrollTop = camY;
 
-      if (!paused) checkItemCollisions();
+      if (!paused) {
+        checkItemCollisions();
+        trackCatsAndDamage();
+      }
       requestAnimationFrame(gameLoop);
     }
 
@@ -311,7 +382,18 @@
       createDrop(centerX, centerY, dx, dy);
     });
 
+    // Spawning intervals
+    setInterval(() => spawnCactus(), 4000);
+    setTimeout(() => spawnItem("mango.png"), 200000);
+    setTimeout(() => spawnItem("pistach.png"), 200000);
+    setTimeout(() => spawnItem("PISTACH@.png"), 200000);
+    setInterval(() => {
+      spawnBlackCat();
+      catSpawnRate = Math.max(500, catSpawnRate * 0.95);
+    }, catSpawnRate);
+
     gameLoop();
   </script>
 </body>
+</html>
 </html>
