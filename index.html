@@ -6,11 +6,13 @@
   <style>
     body {
       background-color: #eee;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
       margin: 0;
+      overflow: auto;
+    }
+    #wrapper {
+      width: 100vw;
+      height: 100vh;
+      overflow: scroll;
     }
     #box {
       width: 2000px;
@@ -18,7 +20,6 @@
       background-color: white;
       border: 1px solid black;
       position: relative;
-      overflow: hidden;
     }
     .bird {
       position: absolute;
@@ -41,15 +42,17 @@
     .drop {
       position: absolute;
       pointer-events: none;
-      font-size: 16px;
+      font-size: 25px;
     }
   </style>
 </head>
 <body>
-  <div id="box">
-    <img id="gary" src="gary.png" alt="Gary">
-    <img id="bob" class="bird" src="bob.png" alt="Bob" style="top: 0; left: 0;">
-    <img id="steven" class="bird" src="Steven.png" alt="Steven" style="bottom: 0; right: 0;">
+  <div id="wrapper">
+    <div id="box">
+      <img id="gary" src="gary.png" alt="Gary">
+      <img id="bob" class="bird" src="bob.png" alt="Bob" style="top: 0; left: 0;">
+      <img id="steven" class="bird" src="steven.png" alt="Steven" style="bottom: 0; right: 0;">
+    </div>
   </div>
 
   <script>
@@ -63,7 +66,7 @@
     function randomCactus() {
       const cactus = document.createElement("img");
       cactus.classList.add("cactus");
-      cactus.src = "Cactus.png";
+      cactus.src = "cactus.png";
       cactus.alt = "Cactus";
       cactus.style.left = Math.floor(Math.random() * (box.clientWidth - 10)) + "px";
       cactus.style.top = Math.floor(Math.random() * (box.clientHeight - 10)) + "px";
@@ -99,7 +102,7 @@
       let start = null;
       const duration = 2000;
       const endX = x - 100;
-      const endY = y + 300;
+      const endY = y + 100;
 
       function animateDrop(timestamp) {
         if (!start) start = timestamp;
@@ -157,4 +160,3 @@
   </script>
 </body>
 </html>
-
