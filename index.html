@@ -50,6 +50,23 @@
       pointer-events: none;
       font-size: 25px;
     }
+    #pointsContainer {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  width: 100px;
+  height: 15px;
+  background-color: #ccc;
+  border: 1px solid #888;
+  z-index: 999;
+}
+
+#pointsBar {
+  height: 100%;
+  width: 0%;
+  background-color: red;
+  transition: width 0.2s ease;
+}
   </style>
 </head>
 <body>
@@ -67,6 +84,14 @@
   <img id="activeBird" class="hud-bird" src="normal.bord.gif" alt="Main Bird">
 
   <script>
+    let points = 0;
+const maxPoints = 10;
+const pointsBar = document.getElementById("pointsBar");
+
+function updatePointsBar() {
+  const percent = (points / maxPoints) * 100;
+  pointsBar.style.width = `${Math.min(percent, 100)}%`;
+}
     const wrapper = document.getElementById("wrapper");
     const box = document.getElementById("box");
     const activeBird = document.getElementById("activeBird");
@@ -179,8 +204,13 @@
               dropRect.right > rect.left &&
               dropRect.top < rect.bottom &&
               dropRect.bottom > rect.top
-            ) {
-              obj.remove();
+) {
+  if (obj.classList.contains("cactus") && points < maxPoints) {
+    points++;
+    updatePointsBar();
+  }
+  obj.remove();
+}
             }
           });
           drop.remove();
