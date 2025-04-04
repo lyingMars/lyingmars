@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Steven Adventure</title>
+  <title>Centered Steven</title>
   <style>
     body {
       margin: 0;
@@ -23,11 +23,15 @@
       border: 1px solid black;
       position: relative;
     }
-    .bird {
-      position: absolute;
+    #steven {
+      position: fixed;
       width: 100px;
       height: 100px;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
       pointer-events: none;
+      z-index: 1000;
     }
     .cactus {
       position: absolute;
@@ -45,34 +49,21 @@
 <body>
   <div id="wrapper">
     <div id="box">
-      <img id="steven" class="bird" src="Steven.png" alt="Steven">
+      <img id="steven" src="Steven.png" alt="Steven">
     </div>
   </div>
 
   <script>
     const wrapper = document.getElementById("wrapper");
     const box = document.getElementById("box");
-    const steven = document.getElementById("steven");
 
+    // Initial camera center
     let camX = box.clientWidth / 2 - wrapper.clientWidth / 2;
     let camY = box.clientHeight / 2 - wrapper.clientHeight / 2;
+    wrapper.scrollLeft = camX;
+    wrapper.scrollTop = camY;
 
-    // Place Steven in center of viewport
-    function centerSteven() {
-      steven.style.left = (wrapper.clientWidth / 2 - steven.offsetWidth / 2) + "px";
-      steven.style.top = (wrapper.clientHeight / 2 - steven.offsetHeight / 2) + "px";
-    }
-
-    centerSteven();
-
-    function scrollCamera(dx, dy) {
-      camX = Math.max(0, Math.min(camX + dx, box.clientWidth - wrapper.clientWidth));
-      camY = Math.max(0, Math.min(camY + dy, box.clientHeight - wrapper.clientHeight));
-      wrapper.scrollLeft = camX;
-      wrapper.scrollTop = camY;
-    }
-
-    // WASD + Arrow key controls
+    // Movement tracking
     const keys = {};
     window.addEventListener("keydown", (e) => {
       keys[e.key.toLowerCase()] = true;
@@ -81,10 +72,11 @@
       keys[e.key.toLowerCase()] = false;
     });
 
+    // Generate Cactus
     function randomCactus() {
       const cactus = document.createElement("img");
       cactus.classList.add("cactus");
-      cactus.src = "Cactus.png";
+      cactus.src = "Cactus.png"; // Capital C
       cactus.alt = "Cactus";
       cactus.style.left = Math.floor(Math.random() * (box.clientWidth - 100)) + "px";
       cactus.style.top = Math.floor(Math.random() * (box.clientHeight - 100)) + "px";
@@ -95,28 +87,27 @@
 
     setInterval(randomCactus, 500);
 
+    // Drop poop from center
     function createDrop() {
       const drop = document.createElement("div");
       drop.classList.add("drop");
-      drop.textContent = "💩";
-      drop.style.left = (camX + wrapper.clientWidth / 2 - 10) + "px";
-      drop.style.top = (camY + wrapper.clientHeight / 2 - 10) + "px";
+      const x = wrapper.scrollLeft + wrapper.clientWidth / 2 - 10;
+      const y = wrapper.scrollTop + wrapper.clientHeight / 2 - 10;
+      drop.style.left = x + "px";
+      drop.style.top = y + "px";
       box.appendChild(drop);
 
       let start = null;
       const duration = 2000;
-      const endX = parseFloat(drop.style.left) - 100;
-      const endY = parseFloat(drop.style.top) + 100;
+      const endX = x - 100;
+      const endY = y + 100;
 
       function animateDrop(timestamp) {
         if (!start) start = timestamp;
         const progress = Math.min((timestamp - start) / duration, 1);
 
-        const currentX = parseFloat(drop.style.left) + (endX - parseFloat(drop.style.left)) * progress;
-        const currentY = parseFloat(drop.style.top) + (endY - parseFloat(drop.style.top)) * progress;
-
-        drop.style.left = currentX + "px";
-        drop.style.top = currentY + "px";
+        drop.style.left = x + (endX - x) * progress + "px";
+        drop.style.top = y + (endY - y) * progress + "px";
 
         if (progress < 1) {
           requestAnimationFrame(animateDrop);
@@ -140,18 +131,28 @@
       requestAnimationFrame(animateDrop);
     }
 
+    // Poop key
     document.addEventListener("keydown", (e) => {
       if (e.code === "Space") {
+        e.preventDefault();
         createDrop();
       }
     });
 
+    // Movement loop
     function gameLoop() {
       const speed = 10;
-      if (keys["arrowup"] || keys["w"]) scrollCamera(0, -speed);
-      if (keys["arrowdown"] || keys["s"]) scrollCamera(0, speed);
-      if (keys["arrowleft"] || keys["a"]) scrollCamera(-speed, 0);
-      if (keys["arrowright"] || keys["d"]) scrollCamera(speed, 0);
+      if (keys["arrowup"] || keys["w"]) camY -= speed;
+      if (keys["arrowdown"] || keys["s"]) camY += speed;
+      if (keys["arrowleft"] || keys["a"]) camX -= speed;
+      if (keys["arrowright"] || keys["d"]) camX += speed;
+
+      camX = Math.max(0, Math.min(camX, box.clientWidth - wrapper.clientWidth));
+      camY = Math.max(0, Math.min(camY, box.clientHeight - wrapper.clientHeight));
+
+      wrapper.scrollLeft = camX;
+      wrapper.scrollTop = camY;
+
       requestAnimationFrame(gameLoop);
     }
 
@@ -159,3 +160,4 @@
   </script>
 </body>
 </html>
+
