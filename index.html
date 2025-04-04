@@ -8,7 +8,7 @@
       margin: 0;
       background-color: #eee;
       overflow: hidden;
-      cursor: auto; /* Mouse visible again */
+      cursor: auto;
     }
     #wrapper {
       width: 100vw;
@@ -59,7 +59,8 @@
       <img id="steven" class="bird-select" src="Steven.png" alt="Steven" style="bottom: 0; right: 0;">
     </div>
   </div>
-  <!-- Active bird shown on screen center -->
+
+  <!-- HUD bird (the one you're controlling) -->
   <img id="activeBird" class="hud-bird" src="normal.bord.gif" alt="Main Bird">
 
   <script>
@@ -106,50 +107,31 @@
 
     setInterval(randomCactus, 500);
 
-function createDrop() {
-  const drop = document.createElement("div");
-  drop.classList.add("drop");
-  drop.textContent = "💩"; // <- This is the line we were missing!
+    function createDrop() {
+      const drop = document.createElement("div");
+      drop.classList.add("drop");
+      drop.textContent = "💩";
 
-  const x = wrapper.scrollLeft + wrapper.clientWidth / 2 - 10;
-  const y = wrapper.scrollTop + wrapper.clientHeight / 2 - 10;
-  drop.style.left = x + "px";
-  drop.style.top = y + "px";
-  box.appendChild(drop);
+      const x = wrapper.scrollLeft + wrapper.clientWidth / 2 - 10;
+      const y = wrapper.scrollTop + wrapper.clientHeight / 2 - 10;
+      drop.style.left = x + "px";
+      drop.style.top = y + "px";
+      box.appendChild(drop);
 
-  let start = null;
-  const duration = 2000;
-  const endX = x - 100;
-  const endY = y + 100;
+      let start = null;
+      const duration = 2000;
+      const endX = x - 100;
+      const endY = y + 100;
 
-  function animateDrop(timestamp) {
-    if (!start) start = timestamp;
-    const progress = Math.min((timestamp - start) / duration, 1);
+      function animateDrop(timestamp) {
+        if (!start) start = timestamp;
+        const progress = Math.min((timestamp - start) / duration, 1);
 
-    drop.style.left = x + (endX - x) * progress + "px";
-    drop.style.top = y + (endY - y) * progress + "px";
+        drop.style.left = x + (endX - x) * progress + "px";
+        drop.style.top = y + (endY - y) * progress + "px";
 
-    if (progress < 1) {
-      requestAnimationFrame(animateDrop);
-    } else {
-      const dropRect = drop.getBoundingClientRect();
-      document.querySelectorAll('.cactus').forEach(cactus => {
-        const cactusRect = cactus.getBoundingClientRect();
-        if (
-          dropRect.left < cactusRect.right &&
-          dropRect.right > cactusRect.left &&
-          dropRect.top < cactusRect.bottom &&
-          dropRect.bottom > cactusRect.top
-        ) {
-          cactus.remove();
-        }
-      });
-      drop.remove();
-    }
-  }
-
-  requestAnimationFrame(animateDrop);
-}
+        if (progress < 1) {
+          requestAnimationFrame(animateDrop);
         } else {
           const dropRect = drop.getBoundingClientRect();
           document.querySelectorAll('.cactus').forEach(cactus => {
