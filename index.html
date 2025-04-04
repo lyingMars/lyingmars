@@ -98,18 +98,17 @@ function randomCactus() {
   cactus.src = "Cactus.png";
   cactus.alt = "Cactus";
 
-  const viewWidth = wrapper.clientWidth;
-  const viewHeight = wrapper.clientHeight;
-
-  // Generate positions within ±500px of current camera view
-  const x = camX + Math.random() * viewWidth - 50 + Math.random() * 1000 - 500;
-  const y = camY + Math.random() * viewHeight - 50 + Math.random() * 1000 - 500;
+  // Viewport-relative random position
+  const padding = 100;
+  const x = wrapper.scrollLeft + Math.random() * (wrapper.clientWidth - padding);
+  const y = wrapper.scrollTop + Math.random() * (wrapper.clientHeight - padding);
 
   cactus.style.left = Math.max(0, Math.min(x, box.clientWidth - 100)) + "px";
   cactus.style.top = Math.max(0, Math.min(y, box.clientHeight - 100)) + "px";
   box.appendChild(cactus);
 
   setTimeout(() => cactus.remove(), 30000);
+
 }
     function createDrop() {
       const drop = document.createElement("div");
