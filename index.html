@@ -83,22 +83,55 @@
       background-color: red;
       transition: width 0.2s ease;
     }
+    #levelUpPopup {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 9999;
+      color: white;
+      font-size: 10vw;
+      text-align: center;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+    .level-option {
+      margin: 20px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
+
   <div id="pointsContainer"><div id="pointsBar"></div></div>
   <div id="healthContainer"><div id="healthBar"></div></div>
+
   <div id="wrapper">
     <div id="box">
       <img id="bob" class="bird-select" src="bob.png" alt="Bob" style="top: 0; left: 0;">
       <img id="steven" class="bird-select" src="Steven.png" alt="Steven" style="bottom: 0; right: 0;">
     </div>
   </div>
+
   <img id="activeBird" class="hud-bird" src="normal.bord.gif" alt="Main Bird">
+
+  <div id="levelUpPopup">
+    <div class="level-option" onclick="closeLevelUp()">A</div>
+    <div class="level-option" onclick="closeLevelUp()">B</div>
+    <div class="level-option" onclick="closeLevelUp()">C</div>
+  </div>
+
   <script>
     const wrapper = document.getElementById("wrapper");
     const box = document.getElementById("box");
     const activeBird = document.getElementById("activeBird");
+    const healthBar = document.getElementById("healthBar");
+    const pointsBar = document.getElementById("pointsBar");
+    const popup = document.getElementById("levelUpPopup");
 
     let camX = box.clientWidth / 2 - wrapper.clientWidth / 2;
     let camY = box.clientHeight / 2 - wrapper.clientHeight / 2;
@@ -109,20 +142,8 @@
     let health = 100;
     let points = 0;
     const maxPoints = 10;
-    const healthBar = document.getElementById("healthBar");
-    const pointsBar = document.getElementById("pointsBar");
-
-    function updateHealthBar() {
-      healthBar.style.width = `${Math.max(0, health)}%`;
-    }
-
-    function updatePointsBar() {
-      const percent = (points / maxPoints) * 100;
-      pointsBar.style.width = `${Math.min(percent, 100)}%`;
-    }
-
-    updateHealthBar();
-    updatePointsBar();
+    let paused = false;
+    let catRate = 7000;
 
     const keys = {};
     window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
@@ -131,7 +152,29 @@
     document.getElementById("bob").addEventListener("click", () => activeBird.src = "bob.png");
     document.getElementById("steven").addEventListener("click", () => activeBird.src = "Steven.png");
 
+    function updateHealthBar() {
+      healthBar.style.width = `${Math.max(0, health)}%`;
+    }
+
+    function updatePointsBar() {
+      const percent = (points / maxPoints) * 100;
+      pointsBar.style.width = `${Math.min(percent, 100)}%`;
+
+      if (points >= maxPoints && !paused) {
+        paused = true;
+        popup.style.display = "flex";
+      }
+    }
+
+    function closeLevelUp() {
+      popup.style.display = "none";
+      points = 0;
+      updatePointsBar();
+      paused = false;
+    }
+
     function spawnCactus() {
+      if (paused) return;
       const cactus = document.createElement("img");
       cactus.classList.add("cactus");
       cactus.src = "Cactus.png";
@@ -140,22 +183,24 @@
       cactus.style.left = `${x}px`;
       cactus.style.top = `${y}px`;
       box.appendChild(cactus);
-      setTimeout(() => cactus.remove(), 30000);
     }
 
     function spawnItem(src) {
+      if (paused) return;
       const item = document.createElement("img");
       item.classList.add("item");
       item.src = src;
-      const x = wrapper.scrollLeft + Math.random() * (wrapper.clientWidth - 100);
-      const y = wrapper.scrollTop + Math.random() * (wrapper.clientHeight - 100);
+      const x = Math.random() * (box.clientWidth - 100);
+      const y = Math.random() * (box.clientHeight - 100);
       item.style.left = `${x}px`;
       item.style.top = `${y}px`;
       box.appendChild(item);
-      setTimeout(() => item.remove(), 60000);
+
+      setTimeout(() => item.remove(), 300000); // 5 mins
     }
 
     function spawnBlackCat() {
+      if (paused) return;
       const cat = document.createElement("img");
       cat.classList.add("mob");
       cat.src = "CATBLACK MOB.gif";
@@ -177,7 +222,6 @@
       cat.style.left = `${Math.max(0, Math.min(x, box.clientWidth - 100))}px`;
       cat.style.top = `${Math.max(0, Math.min(y, box.clientHeight - 100))}px`;
       box.appendChild(cat);
-      setTimeout(() => cat.remove(), 30000);
     }
 
     function createDrop(x, y, dx = -100, dy = 100) {
@@ -198,6 +242,7 @@
         const progress = Math.min((timestamp - start) / duration, 1);
         const currX = x + (endX - x) * progress;
         const currY = y + (endY - y) * progress;
+
         drop.style.left = `${currX}px`;
         drop.style.top = `${currY}px`;
 
@@ -223,10 +268,12 @@
           drop.remove();
         }
       }
+
       requestAnimationFrame(animateDrop);
     }
 
     document.addEventListener("keydown", (e) => {
+      if (paused) return;
       if (e.code === "Space" && !aimingEnabled) {
         e.preventDefault();
         const x = wrapper.scrollLeft + wrapper.clientWidth / 2 - 10;
@@ -236,7 +283,7 @@
     });
 
     document.addEventListener("click", (e) => {
-      if (!aimingEnabled) return;
+      if (!aimingEnabled || paused) return;
       const targetX = e.clientX + wrapper.scrollLeft;
       const targetY = e.clientY + wrapper.scrollTop;
       const centerX = wrapper.scrollLeft + wrapper.clientWidth / 2 - 10;
@@ -247,51 +294,58 @@
     });
 
     function gameLoop() {
-      const speed = 10;
-      if (keys["arrowup"] || keys["w"]) camY -= speed;
-      if (keys["arrowdown"] || keys["s"]) camY += speed;
-      if (keys["arrowleft"] || keys["a"]) camX -= speed;
-      if (keys["arrowright"] || keys["d"]) camX += speed;
+      if (!paused) {
+        const speed = 10;
+        if (keys["arrowup"] || keys["w"]) camY -= speed;
+        if (keys["arrowdown"] || keys["s"]) camY += speed;
+        if (keys["arrowleft"] || keys["a"]) camX -= speed;
+        if (keys["arrowright"] || keys["d"]) camX += speed;
 
-      camX = Math.max(0, Math.min(camX, box.clientWidth - wrapper.clientWidth));
-      camY = Math.max(0, Math.min(camY, box.clientHeight - wrapper.clientHeight));
+        camX = Math.max(0, Math.min(camX, box.clientWidth - wrapper.clientWidth));
+        camY = Math.max(0, Math.min(camY, box.clientHeight - wrapper.clientHeight));
 
-      wrapper.scrollLeft = camX;
-      wrapper.scrollTop = camY;
+        wrapper.scrollLeft = camX;
+        wrapper.scrollTop = camY;
 
-      const centerX = wrapper.clientWidth / 2;
-      const centerY = wrapper.clientHeight / 2;
-
-      document.querySelectorAll('.mob').forEach(cat => {
-        const catX = parseFloat(cat.style.left);
-        const catY = parseFloat(cat.style.top);
-        const dx = (wrapper.scrollLeft + centerX) - catX;
-        const dy = (wrapper.scrollTop + centerY) - catY;
-        const dist = Math.hypot(dx, dy);
-        if (dist > 1) {
+        // Move cats
+        document.querySelectorAll('.mob').forEach(cat => {
+          const catX = parseFloat(cat.style.left);
+          const catY = parseFloat(cat.style.top);
+          const targetX = wrapper.scrollLeft + wrapper.clientWidth / 2;
+          const targetY = wrapper.scrollTop + wrapper.clientHeight / 2;
+          const dx = targetX - catX;
+          const dy = targetY - catY;
+          const dist = Math.hypot(dx, dy);
           const speed = 0.7;
-          cat.style.left = `${catX + dx / dist * speed}px`;
-          cat.style.top = `${catY + dy / dist * speed}px`;
-        }
-      });
+          if (dist > 1) {
+            cat.style.left = `${catX + dx / dist * speed}px`;
+            cat.style.top = `${catY + dy / dist * speed}px`;
+          }
+        });
 
-      document.querySelectorAll('.item').forEach(item => {
-        const rect = item.getBoundingClientRect();
-        if (
-          centerX > rect.left &&
-          centerX < rect.right &&
-          centerY > rect.top &&
-          centerY < rect.bottom
-        ) {
-          item.remove();
-          aimingEnabled = true;
-        }
-      });
+        // Collect items
+        document.querySelectorAll('.item').forEach(item => {
+          const rect = item.getBoundingClientRect();
+          const centerX = wrapper.clientWidth / 2;
+          const centerY = wrapper.clientHeight / 2;
+          if (
+            centerX > rect.left &&
+            centerX < rect.right &&
+            centerY > rect.top &&
+            centerY < rect.bottom
+          ) {
+            item.remove();
+            aimingEnabled = true;
+          }
+        });
+      }
 
       requestAnimationFrame(gameLoop);
     }
 
+    // Passive checks
     setInterval(() => {
+      if (paused) return;
       const centerX = wrapper.clientWidth / 2;
       const centerY = wrapper.clientHeight / 2;
       document.querySelectorAll('.mob').forEach(cat => {
@@ -308,11 +362,16 @@
       });
     }, 500);
 
-    setInterval(spawnCactus, 1000);
-    setInterval(() => spawnItem("mango.png"), 8000);
-    setInterval(() => spawnItem("pistach.png"), 12000);
-    setInterval(() => spawnItem("PISTACH@.png"), 15000);
-    setInterval(spawnBlackCat, 7000);
+    // Spawns
+    setInterval(() => spawnCactus(), 4000); // slower cactus
+    setTimeout(() => spawnItem("mango.png"), 200000);
+    setTimeout(() => spawnItem("pistach.png"), 200000);
+    setTimeout(() => spawnItem("PISTACH@.png"), 200000);
+
+    setInterval(() => {
+      spawnBlackCat();
+      if (catRate > 500) catRate *= 0.95;
+    }, catRate);
 
     gameLoop();
   </script>
