@@ -10,12 +10,14 @@
       overflow: hidden;
       cursor: crosshair;
     }
+
     #wrapper {
       width: 100vw;
       height: 100vh;
       overflow: scroll;
       position: relative;
     }
+
     #box {
       width: 20000px;
       height: 20000px;
@@ -23,6 +25,7 @@
       border: 1px solid black;
       position: relative;
     }
+
     .hud-bird {
       position: fixed;
       width: 200px;
@@ -33,46 +36,70 @@
       pointer-events: none;
       z-index: 10;
     }
+
     .bird-select, .item, .mob {
       position: absolute;
       width: 100px;
       height: 100px;
       cursor: pointer;
     }
+
     .cactus {
       position: absolute;
       width: 100px;
       height: 100px;
       pointer-events: none;
     }
+
     .drop {
       position: absolute;
       pointer-events: none;
       font-size: 25px;
     }
-    #pointsContainer {
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  width: 100px;
-  height: 15px;
-  background-color: #ccc;
-  border: 1px solid #888;
-  z-index: 999;
-}
 
-#pointsBar {
-  height: 100%;
-  width: 0%;
-  background-color: red;
-  transition: width 0.2s ease;
-}
+    #pointsContainer {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      width: 100px;
+      height: 15px;
+      background-color: #ccc;
+      border: 1px solid #888;
+      z-index: 999;
+    }
+
+    #pointsBar {
+      height: 100%;
+      width: 0%;
+      background-color: red;
+      transition: width 0.2s ease;
+    }
+
+    #healthContainer {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 300px;
+      height: 20px;
+      background-color: #ccc;
+      border: 1px solid #888;
+      z-index: 999;
+    }
+
+    #healthBar {
+      height: 100%;
+      width: 100%;
+      background-color: red;
+      transition: width 0.2s ease;
+    }
   </style>
 </head>
 <body>
-  <div id="pointsContainer">
-  <div id="pointsBar"></div>
-</div>
+
+  <div id="pointsContainer"><div id="pointsBar"></div></div>
+  <div id="healthContainer"><div id="healthBar"></div></div>
+
   <div id="wrapper">
     <div id="box">
       <img id="bob" class="bird-select" src="bob.png" alt="Bob" style="top: 0; left: 0;">
@@ -80,18 +107,9 @@
     </div>
   </div>
 
-  <!-- HUD bird (always center) -->
   <img id="activeBird" class="hud-bird" src="normal.bord.gif" alt="Main Bird">
 
   <script>
-    let points = 0;
-const maxPoints = 10;
-const pointsBar = document.getElementById("pointsBar");
-
-function updatePointsBar() {
-  const percent = (points / maxPoints) * 100;
-  pointsBar.style.width = `${Math.min(percent, 100)}%`;
-}
     const wrapper = document.getElementById("wrapper");
     const box = document.getElementById("box");
     const activeBird = document.getElementById("activeBird");
@@ -102,6 +120,23 @@ function updatePointsBar() {
     wrapper.scrollTop = camY;
 
     let aimingEnabled = false;
+    let health = 100;
+    let points = 0;
+    const maxPoints = 10;
+    const healthBar = document.getElementById("healthBar");
+    const pointsBar = document.getElementById("pointsBar");
+
+    function updateHealthBar() {
+      healthBar.style.width = `${Math.max(0, health)}%`;
+    }
+
+    function updatePointsBar() {
+      const percent = (points / maxPoints) * 100;
+      pointsBar.style.width = `${Math.min(percent, 100)}%`;
+    }
+
+    updateHealthBar();
+    updatePointsBar();
 
     const keys = {};
     window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
@@ -165,12 +200,6 @@ function updatePointsBar() {
       setTimeout(() => cat.remove(), 30000);
     }
 
-    setInterval(spawnCactus, 1000);
-    setInterval(() => spawnItem("mango.png"), 8000);
-    setInterval(() => spawnItem("pistach.png"), 12000);
-    setInterval(() => spawnItem("PISTACH@.png"), 15000);
-    setInterval(spawnBlackCat, 7000);
-
     function createDrop(x, y, dx = -100, dy = 100) {
       const drop = document.createElement("div");
       drop.classList.add("drop");
@@ -204,13 +233,12 @@ function updatePointsBar() {
               dropRect.right > rect.left &&
               dropRect.top < rect.bottom &&
               dropRect.bottom > rect.top
-) {
-  if (obj.classList.contains("cactus") && points < maxPoints) {
-    points++;
-    updatePointsBar();
-  }
-  obj.remove();
-}
+            ) {
+              if (obj.classList.contains("cactus") && points < maxPoints) {
+                points++;
+                updatePointsBar();
+              }
+              obj.remove();
             }
           });
           drop.remove();
@@ -253,10 +281,52 @@ function updatePointsBar() {
       wrapper.scrollLeft = camX;
       wrapper.scrollTop = camY;
 
+      // Make cats move toward bird
+      document.querySelectorAll('.mob').forEach(cat => {
+        const catX = parseFloat(cat.style.left);
+        const catY = parseFloat(cat.style.top);
+        const targetX = wrapper.scrollLeft + wrapper.clientWidth / 2;
+        const targetY = wrapper.scrollTop + wrapper.clientHeight / 2;
+        const dx = targetX - catX;
+        const dy = targetY - catY;
+        const dist = Math.hypot(dx, dy);
+        const speed = 0.7;
+        if (dist > 1) {
+          cat.style.left = `${catX + dx / dist * speed}px`;
+          cat.style.top = `${catY + dy / dist * speed}px`;
+        }
+      });
+
       requestAnimationFrame(gameLoop);
     }
+
+    // Damage check every 0.5s
+    setInterval(() => {
+      const centerX = wrapper.clientWidth / 2;
+      const centerY = wrapper.clientHeight / 2;
+      document.querySelectorAll('.mob').forEach(cat => {
+        const rect = cat.getBoundingClientRect();
+        if (
+          centerX > rect.left &&
+          centerX < rect.right &&
+          centerY > rect.top &&
+          centerY < rect.bottom
+        ) {
+          health -= 5;
+          updateHealthBar();
+        }
+      });
+    }, 500);
+
+    setInterval(spawnCactus, 1000);
+    setInterval(() => spawnItem("mango.png"), 8000);
+    setInterval(() => spawnItem("pistach.png"), 12000);
+    setInterval(() => spawnItem("PISTACH@.png"), 15000);
+    setInterval(spawnBlackCat, 7000);
 
     gameLoop();
   </script>
 </body>
+</html>
+
 </html>
