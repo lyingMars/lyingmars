@@ -21,6 +21,24 @@
       font-weight: bold;
       margin-left: 10px;
     }
+
+    #soundIndicator {
+      width: 40px;
+      height: 40px;
+      margin-top: 10px;
+      image-rendering: pixelated;
+      transition: transform 0.1s ease;
+    }
+
+    .bounce {
+      animation: bounce 0.3s ease;
+    }
+
+    @keyframes bounce {
+      0%   { transform: translateY(0); }
+      50%  { transform: translateY(-10px); }
+      100% { transform: translateY(0); }
+    }
   </style>
 </head>
 <body>
@@ -36,6 +54,8 @@
   <label for="thresholdSlider">Threshold: <span id="thresholdValue">0.1</span></label><br>
   <input type="range" id="thresholdSlider" min="0.01" max="0.5" step="0.01" value="0.1" style="width: 100%;">
 
+  <img id="soundIndicator" src="pixil-frame-0.png" alt="sound status" />
+
   <script>
     const startBtn = document.getElementById('startBtn');
     const logList = document.getElementById('logList');
@@ -43,6 +63,7 @@
     const thresholdValue = document.getElementById('thresholdValue');
     const volumeLevel = document.getElementById('volumeLevel');
     const volumeValue = document.getElementById('volumeValue');
+    const soundIndicator = document.getElementById('soundIndicator');
 
     thresholdSlider.oninput = () => {
       thresholdValue.textContent = thresholdSlider.value;
@@ -51,6 +72,7 @@
     let mediaRecorder;
     let chunks = [];
     let recording = false;
+    let bounceCooldown = false;
 
     startBtn.onclick = async () => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -89,22 +111,35 @@
         const rms = Math.sqrt(sum / input.length);
         const threshold = parseFloat(thresholdSlider.value);
 
-        // Update visual meter and text
         volumeValue.textContent = rms.toFixed(3);
         volumeLevel.style.width = `${Math.min(100, rms * 300)}%`;
         volumeLevel.style.background = rms > threshold ? 'red' : 'green';
 
-        // Recording logic
-        if (rms > threshold && !recording) {
-          mediaRecorder.start();
-          recording = true;
-          console.log('Started recording clip...');
-        }
+        // Image indicator logic
+        if (rms > threshold) {
+          soundIndicator.src = 'pixil-frame-0 (1).png';
 
-        if (rms < threshold / 2 && recording && mediaRecorder.state === 'recording') {
-          mediaRecorder.stop();
-          recording = false;
-          console.log('Stopped recording clip.');
+          // Trigger bounce if not on cooldown
+          if (!bounceCooldown) {
+            soundIndicator.classList.add('bounce');
+            bounceCooldown = true;
+            setTimeout(() => {
+              soundIndicator.classList.remove('bounce');
+              bounceCooldown = false;
+            }, 300);
+          }
+
+          // Recording logic
+          if (!recording) {
+            mediaRecorder.start();
+            recording = true;
+          }
+        } else {
+          soundIndicator.src = 'pixil-frame-0.png';
+          if (recording && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+            recording = false;
+          }
         }
       };
 
