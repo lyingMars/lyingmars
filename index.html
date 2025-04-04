@@ -24,7 +24,6 @@
       position: absolute;
       width: 100px;
       height: 100px;
-      pointer-events: auto;
       cursor: pointer;
     }
     #gary {
@@ -57,13 +56,13 @@
     const box = document.getElementById("box");
     const gary = document.getElementById("gary");
     const bob = document.getElementById("bob");
-    const steven = document.getElementById("Steven");
+    const steven = document.getElementById("steven");
 
     let activeBird = gary;
 
     function randomCactus() {
       const cactus = document.createElement("img");
-      cactus.classList.add("Cactus");
+      cactus.classList.add("cactus");
       cactus.src = "Cactus.png";
       cactus.alt = "Cactus";
       cactus.style.left = Math.floor(Math.random() * (box.clientWidth - 10)) + "px";
@@ -75,14 +74,16 @@
 
     setInterval(randomCactus, 500);
 
-    bob.addEventListener("click", () => {
+    bob.addEventListener("click", (e) => {
+      e.stopPropagation();
       if (activeBird !== bob) {
         activeBird = bob;
       }
     });
 
-    Steven.addEventListener("click", () => {
-      if (activeBird !== Steven) {
+    steven.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (activeBird !== steven) {
         activeBird = steven;
       }
     });
@@ -156,6 +157,4 @@
   </script>
 </body>
 </html>
-  </script>
-</body>
-</html>
+
