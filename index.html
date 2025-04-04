@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Bird Game2</title>
+  <title>Bird Game</title>
   <style>
     body {
       margin: 0;
@@ -108,16 +108,13 @@
 <body>
   <div id="pointsContainer"><div id="pointsBar"></div></div>
   <div id="healthContainer"><div id="healthBar"></div></div>
-
   <div id="wrapper">
     <div id="box">
       <img id="bob" class="bird-select" src="bob.png" alt="Bob" style="top: 0; left: 0;">
       <img id="steven" class="bird-select" src="Steven.png" alt="Steven" style="bottom: 0; right: 0;">
     </div>
   </div>
-
   <img id="activeBird" class="hud-bird" src="normal.bord.gif" alt="Main Bird">
-
   <div id="levelUpPopup">
     <div class="level-option" onclick="closeLevelUp()">A</div>
     <div class="level-option" onclick="closeLevelUp()">B</div>
@@ -125,73 +122,54 @@
   </div>
 
   <script>
+    let isSpeedBoosted = false;
+    let isSeedActive = false;
+    let paused = false;
+    let aimingEnabled = false;
+    let points = 0;
+    let health = 100;
+    let camX = 0;
+    let camY = 0;
+    let catSpawnRate = 7000;
+
     const wrapper = document.getElementById("wrapper");
     const box = document.getElementById("box");
     const activeBird = document.getElementById("activeBird");
-    const healthBar = document.getElementById("healthBar");
-    const pointsBar = document.getElementById("pointsBar");
     const popup = document.getElementById("levelUpPopup");
-
-    let camX = box.clientWidth / 2 - wrapper.clientWidth / 2;
-    let camY = box.clientHeight / 2 - wrapper.clientHeight / 2;
-    wrapper.scrollLeft = camX;
-    wrapper.scrollTop = camY;
-
-    let aimingEnabled = false;
-    let health = 100;
-    let points = 0;
-    const maxPoints = 10;
-    let paused = false;
-    let catRate = 7000;
-
-    let isSpeedBoosted = false;
-    let isSeedActive = false;
-
+    const pointsBar = document.getElementById("pointsBar");
+    const healthBar = document.getElementById("healthBar");
     const keys = {};
+
     window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
     window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
-    document.getElementById("bob").addEventListener("click", () => activeBird.src = "bob.png");
-    document.getElementById("steven").addEventListener("click", () => activeBird.src = "Steven.png");
     function updateHealthBar() {
-      healthBar.style.width = `${Math.max(0, health)}%`;
+      healthBar.style.width = `${Math.min(100, health)}%`;
     }
 
     function updatePointsBar() {
-      const percent = (points / maxPoints) * 100;
+      const percent = (points / 10) * 100;
       pointsBar.style.width = `${Math.min(percent, 100)}%`;
-
-      if (points >= maxPoints && !paused) {
+      if (points >= 10 && !paused) {
         paused = true;
         popup.style.display = "flex";
       }
     }
 
     function closeLevelUp() {
-      popup.style.display = "none";
       points = 0;
       updatePointsBar();
       paused = false;
-    }
-
-    function applyMangoEffect() {
-      if (isSpeedBoosted) return;
-      isSpeedBoosted = true;
-      activeBird.src = "zoom.bord.gif";
-      setTimeout(() => {
-        isSpeedBoosted = false;
-        activeBird.src = "normal.bord.gif";
-      }, 3000);
+      popup.style.display = "none";
     }
 
     function activateSeed() {
-      if (isSeedActive) return;
       isSeedActive = true;
-      activeBird.src = "trippy2.bord.gif";
-      popup.style.display = "none";
       paused = false;
       points = 0;
       updatePointsBar();
+      popup.style.display = "none";
+      activeBird.src = "trippy2.bord.gif";
 
       const interval = setInterval(() => {
         if (!isSeedActive) return clearInterval(interval);
@@ -211,90 +189,208 @@
         activeBird.src = "normal.bord.gif";
       }, 10000);
     }
-    function gameLoop() {
-      if (!paused) {
-        const speed = isSpeedBoosted ? 20 : 10;
-        if (keys["arrowup"] || keys["w"]) camY -= speed;
-        if (keys["arrowdown"] || keys["s"]) camY += speed;
-        if (keys["arrowleft"] || keys["a"]) camX -= speed;
-        if (keys["arrowright"] || keys["d"]) camX += speed;
 
-        camX = Math.max(0, Math.min(camX, box.clientWidth - wrapper.clientWidth));
-        camY = Math.max(0, Math.min(camY, box.clientHeight - wrapper.clientHeight));
-
-        wrapper.scrollLeft = camX;
-        wrapper.scrollTop = camY;
-
-        // Move cats toward center
-        document.querySelectorAll('.mob').forEach(cat => {
-          const catX = parseFloat(cat.style.left);
-          const catY = parseFloat(cat.style.top);
-          const targetX = wrapper.scrollLeft + wrapper.clientWidth / 2;
-          const targetY = wrapper.scrollTop + wrapper.clientHeight / 2;
-          const dx = targetX - catX;
-          const dy = targetY - catY;
-          const dist = Math.hypot(dx, dy);
-          const speed = 0.7;
-          if (dist > 1) {
-            cat.style.left = `${catX + dx / dist * speed}px`;
-            cat.style.top = `${catY + dy / dist * speed}px`;
-          }
-        });
-
-        // Collect items
-        document.querySelectorAll('.item').forEach(item => {
-          const rect = item.getBoundingClientRect();
-          const centerX = wrapper.clientWidth / 2;
-          const centerY = wrapper.clientHeight / 2;
-          if (
-            centerX > rect.left &&
-            centerX < rect.right &&
-            centerY > rect.top &&
-            centerY < rect.bottom
-          ) {
-            if (item.src.includes("pistach")) {
-              health = Math.min(100, health + 150);
-              updateHealthBar();
-            } else if (item.src.includes("mango")) {
-              applyMangoEffect();
-            }
-            item.remove();
-            aimingEnabled = true;
-          }
-        });
-      }
-
-      requestAnimationFrame(gameLoop);
+    function applyMangoEffect() {
+      isSpeedBoosted = true;
+      activeBird.src = "zoom.bord.gif";
+      setTimeout(() => {
+        isSpeedBoosted = false;
+        activeBird.src = "normal.bord.gif";
+      }, 3000);
     }
-    // Passive damage if cats touch player
-    setInterval(() => {
-      if (paused) return;
-      const centerX = wrapper.clientWidth / 2;
-      const centerY = wrapper.clientHeight / 2;
-      document.querySelectorAll('.mob').forEach(cat => {
-        const rect = cat.getBoundingClientRect();
+
+    function collectItem(item) {
+      const src = item.src;
+      if (src.includes("pistach")) {
+        health = Math.min(100, health + 150);
+        updateHealthBar();
+      } else if (src.includes("mango")) {
+        applyMangoEffect();
+      }
+      item.remove();
+      aimingEnabled = true;
+    }
+
+    function checkItemCollisions() {
+      document.querySelectorAll('.item').forEach(item => {
+        const rect = item.getBoundingClientRect();
+        const centerX = wrapper.clientWidth / 2;
+        const centerY = wrapper.clientHeight / 2;
         if (
           centerX > rect.left &&
           centerX < rect.right &&
           centerY > rect.top &&
           centerY < rect.bottom
         ) {
+          collectItem(item);
+        }
+      });
+    }
+
+    function spawnCactus() {
+      if (paused) return;
+      const cactus = document.createElement("img");
+      cactus.classList.add("cactus");
+      cactus.src = "Cactus.png";
+      const x = Math.random() * (box.clientWidth - 100);
+      const y = Math.random() * (box.clientHeight - 100);
+      cactus.style.left = `${x}px`;
+      cactus.style.top = `${y}px`;
+      box.appendChild(cactus);
+    }
+
+    function spawnItem(src) {
+      if (paused) return;
+      const item = document.createElement("img");
+      item.classList.add("item");
+      item.src = src;
+      const x = Math.random() * (box.clientWidth - 100);
+      const y = Math.random() * (box.clientHeight - 100);
+      item.style.left = `${x}px`;
+      item.style.top = `${y}px`;
+      box.appendChild(item);
+    }
+
+    function spawnBlackCat() {
+      if (paused) return;
+      const cat = document.createElement("img");
+      cat.classList.add("mob");
+      cat.src = "CATBLACK MOB.gif";
+      const viewX = wrapper.scrollLeft;
+      const viewY = wrapper.scrollTop;
+      const vw = wrapper.clientWidth;
+      const vh = wrapper.clientHeight;
+      const buffer = 400;
+      const side = Math.floor(Math.random() * 4);
+      let x, y;
+      switch (side) {
+        case 0: x = viewX - buffer; y = viewY + Math.random() * vh; break;
+        case 1: x = viewX + vw + buffer; y = viewY + Math.random() * vh; break;
+        case 2: y = viewY - buffer; x = viewX + Math.random() * vw; break;
+        case 3: y = viewY + vh + buffer; x = viewX + Math.random() * vw; break;
+      }
+      cat.style.left = `${x}px`;
+      cat.style.top = `${y}px`;
+      box.appendChild(cat);
+    }
+
+    function trackCatsAndDamage() {
+      const centerX = wrapper.clientWidth / 2;
+      const centerY = wrapper.clientHeight / 2;
+      document.querySelectorAll('.mob').forEach(cat => {
+        const catX = parseFloat(cat.style.left);
+        const catY = parseFloat(cat.style.top);
+        const dx = wrapper.scrollLeft + centerX - catX;
+        const dy = wrapper.scrollTop + centerY - catY;
+        const dist = Math.hypot(dx, dy);
+        const speed = 0.7;
+        if (dist > 1) {
+          cat.style.left = `${catX + dx / dist * speed}px`;
+          cat.style.top = `${catY + dy / dist * speed}px`;
+        }
+        const rect = cat.getBoundingClientRect();
+        if (
+          centerX > rect.left && centerX < rect.right &&
+          centerY > rect.top && centerY < rect.bottom
+        ) {
           health -= 5;
           updateHealthBar();
         }
       });
-    }, 500);
+    }
 
-    // Spawns
-    setInterval(() => spawnCactus(), 4000); // slower cactus
+    function createDrop(x, y, dx = -100, dy = 100) {
+      const drop = document.createElement("div");
+      drop.classList.add("drop");
+      drop.textContent = "💩";
+      drop.style.left = `${x}px`;
+      drop.style.top = `${y}px`;
+      box.appendChild(drop);
+
+      let start = null;
+      const duration = 2000;
+      const endX = x + dx;
+      const endY = y + dy;
+
+      function animateDrop(timestamp) {
+        if (!start) start = timestamp;
+        const progress = Math.min((timestamp - start) / duration, 1);
+        drop.style.left = `${x + (endX - x) * progress}px`;
+        drop.style.top = `${y + (endY - y) * progress}px`;
+
+        if (progress < 1) {
+          requestAnimationFrame(animateDrop);
+        } else {
+          const dropRect = drop.getBoundingClientRect();
+          document.querySelectorAll('.cactus, .mob').forEach(obj => {
+            const rect = obj.getBoundingClientRect();
+            if (
+              dropRect.left < rect.right &&
+              dropRect.right > rect.left &&
+              dropRect.top < rect.bottom &&
+              dropRect.bottom > rect.top
+            ) {
+              if (obj.classList.contains("cactus") && points < 10) {
+                points++;
+                updatePointsBar();
+              }
+              obj.remove();
+            }
+          });
+          drop.remove();
+        }
+      }
+      requestAnimationFrame(animateDrop);
+    }
+
+    function gameLoop() {
+      const moveSpeed = isSpeedBoosted ? 20 : 10;
+      if (keys["arrowup"] || keys["w"]) camY -= moveSpeed;
+      if (keys["arrowdown"] || keys["s"]) camY += moveSpeed;
+      if (keys["arrowleft"] || keys["a"]) camX -= moveSpeed;
+      if (keys["arrowright"] || keys["d"]) camX += moveSpeed;
+      camX = Math.max(0, Math.min(camX, box.clientWidth - wrapper.clientWidth));
+      camY = Math.max(0, Math.min(camY, box.clientHeight - wrapper.clientHeight));
+      wrapper.scrollLeft = camX;
+      wrapper.scrollTop = camY;
+
+      if (!paused) {
+        checkItemCollisions();
+        trackCatsAndDamage();
+      }
+      requestAnimationFrame(gameLoop);
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (paused) return;
+      if (e.code === "Space" && !aimingEnabled) {
+        e.preventDefault();
+        const x = wrapper.scrollLeft + wrapper.clientWidth / 2 - 10;
+        const y = wrapper.scrollTop + wrapper.clientHeight / 2 - 10;
+        createDrop(x, y);
+      }
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!aimingEnabled || paused) return;
+      const targetX = e.clientX + wrapper.scrollLeft;
+      const targetY = e.clientY + wrapper.scrollTop;
+      const centerX = wrapper.scrollLeft + wrapper.clientWidth / 2 - 10;
+      const centerY = wrapper.scrollTop + wrapper.clientHeight / 2 - 10;
+      const dx = targetX - centerX;
+      const dy = targetY - centerY;
+      createDrop(centerX, centerY, dx, dy);
+    });
+
+    // Spawning intervals
+    setInterval(() => spawnCactus(), 4000);
     setTimeout(() => spawnItem("mango.png"), 200000);
     setTimeout(() => spawnItem("pistach.png"), 200000);
     setTimeout(() => spawnItem("PISTACH@.png"), 200000);
-
     setInterval(() => {
       spawnBlackCat();
-      if (catRate > 500) catRate *= 0.95;
-    }, catRate);
+      catSpawnRate = Math.max(500, catSpawnRate * 0.95);
+    }, catSpawnRate);
 
     gameLoop();
   </script>
