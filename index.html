@@ -25,8 +25,8 @@
     }
     .hud-bird {
       position: fixed;
-      width: 200px;
-      height: 200px;
+      width: 100px;
+      height: 100px;
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);
@@ -41,9 +41,10 @@
     }
     .cactus {
       position: absolute;
-      width: 75px;
-      height: 75px;
+      width: 100px;
+      height: 100px;
       pointer-events: none;
+      border: 2px solid red; /* Add red border for visibility */
     }
     .drop {
       position: absolute;
@@ -60,7 +61,7 @@
     </div>
   </div>
 
-  <!-- HUD bird (the one you're controlling) -->
+  <!-- HUD bird (always in center) -->
   <img id="activeBird" class="hud-bird" src="normal.bord.gif" alt="Main Bird">
 
   <script>
@@ -92,32 +93,33 @@
       e.stopPropagation();
       activeBird.src = "Steven.png";
     });
-function randomCactus() {
-  const cactus = document.createElement("img");
-  cactus.classList.add("cactus");
-  cactus.src = "Cactus.png";
-  cactus.alt = "Cactus";
 
-  // Get current visible area
-  const viewX = wrapper.scrollLeft;
-  const viewY = wrapper.scrollTop;
-  const viewWidth = wrapper.clientWidth;
-  const viewHeight = wrapper.clientHeight;
+    function randomCactus() {
+      const cactus = document.createElement("img");
+      cactus.classList.add("cactus");
+      cactus.src = "Cactus.png";
+      cactus.alt = "Cactus";
 
-  // Generate random position within current viewport
-  const x = viewX + Math.random() * (viewWidth - 100);
-  const y = viewY + Math.random() * (viewHeight - 100);
+      // Spawn within current visible screen area
+      const viewX = wrapper.scrollLeft;
+      const viewY = wrapper.scrollTop;
+      const viewW = wrapper.clientWidth;
+      const viewH = wrapper.clientHeight;
 
-  cactus.style.left = `${x}px`;
-  cactus.style.top = `${y}px`;
-  box.appendChild(cactus);
+      const x = viewX + Math.random() * (viewW - 100);
+      const y = viewY + Math.random() * (viewH - 100);
 
-  console.log("Cactus spawned at", x, y);
+      cactus.style.left = `${x}px`;
+      cactus.style.top = `${y}px`;
+      box.appendChild(cactus);
 
-  setTimeout(() => cactus.remove(), 30000);
-}
+      console.log("Cactus spawned at:", x, y);
 
-}
+      setTimeout(() => cactus.remove(), 30000);
+    }
+
+    setInterval(randomCactus, 500);
+
     function createDrop() {
       const drop = document.createElement("div");
       drop.classList.add("drop");
