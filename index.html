@@ -7,7 +7,8 @@
     body {
       background-color: #eee;
       margin: 0;
-      overflow: auto;
+      overflow: hidden;
+      cursor: none; /* Make mouse invisible */
     }
     #wrapper {
       width: 100vw;
@@ -27,7 +28,7 @@
       height: 100px;
       cursor: pointer;
     }
-    #gary {
+    #mainBird {
       position: absolute;
       width: 100px;
       height: 100px;
@@ -49,19 +50,20 @@
 <body>
   <div id="wrapper">
     <div id="box">
-      <img id="gary" src="gary.png" alt="Gary">
+      <img id="mainBird" src="normal.bord.gif" alt="Main Bird">
       <img id="bob" class="bird" src="bob.png" alt="Bob" style="top: 0; left: 0;">
-      <img id="steven" class="bird" src="steven.png" alt="Steven" style="bottom: 0; right: 0;">
+      <img id="steven" class="bird" src="Steven.png" alt="Steven" style="bottom: 0; right: 0;">
     </div>
   </div>
 
   <script>
+    const wrapper = document.getElementById("wrapper");
     const box = document.getElementById("box");
-    const gary = document.getElementById("gary");
+    const mainBird = document.getElementById("mainBird");
     const bob = document.getElementById("bob");
     const steven = document.getElementById("steven");
 
-    let activeBird = gary;
+    let activeBird = mainBird;
 
     function randomCactus() {
       const cactus = document.createElement("img");
@@ -138,8 +140,8 @@
 
     box.addEventListener("mousemove", (e) => {
       const rect = box.getBoundingClientRect();
-      let x = e.clientX - rect.left;
-      let y = e.clientY - rect.top;
+      let x = e.clientX - rect.left + wrapper.scrollLeft;
+      let y = e.clientY - rect.top + wrapper.scrollTop;
 
       const birdWidth = activeBird.offsetWidth;
       const birdHeight = activeBird.offsetHeight;
@@ -149,14 +151,31 @@
 
       activeBird.style.left = x + "px";
       activeBird.style.top = y + "px";
+
+      // Auto-scroll logic
+      const edge = 50;
+      const scrollSpeed = 20;
+
+      if (e.clientX < edge) {
+        wrapper.scrollLeft -= scrollSpeed;
+      } else if (e.clientX > window.innerWidth - edge) {
+        wrapper.scrollLeft += scrollSpeed;
+      }
+
+      if (e.clientY < edge) {
+        wrapper.scrollTop -= scrollSpeed;
+      } else if (e.clientY > window.innerHeight - edge) {
+        wrapper.scrollTop += scrollSpeed;
+      }
     });
 
     box.addEventListener("click", (e) => {
       const rect = box.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const x = e.clientX - rect.left + wrapper.scrollLeft;
+      const y = e.clientY - rect.top + wrapper.scrollTop;
       createDrop(x, y);
     });
   </script>
 </body>
 </html>
+
