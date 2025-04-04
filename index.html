@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Centered Steven</title>
+  <title>Center Bird Map</title>
   <style>
     body {
       margin: 0;
       background-color: #eee;
       overflow: hidden;
-      cursor: none;
+      cursor: auto; /* Mouse visible again */
     }
     #wrapper {
       width: 100vw;
@@ -23,7 +23,7 @@
       border: 1px solid black;
       position: relative;
     }
-    #steven {
+    .hud-bird {
       position: fixed;
       width: 100px;
       height: 100px;
@@ -31,7 +31,13 @@
       top: 50%;
       transform: translate(-50%, -50%);
       pointer-events: none;
-      z-index: 1000;
+      z-index: 10;
+    }
+    .bird-select {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      cursor: pointer;
     }
     .cactus {
       position: absolute;
@@ -49,21 +55,25 @@
 <body>
   <div id="wrapper">
     <div id="box">
-      <img id="steven" src="Steven.png" alt="Steven">
+      <img id="bob" class="bird-select" src="bob.png" alt="Bob" style="top: 0; left: 0;">
+      <img id="steven" class="bird-select" src="Steven.png" alt="Steven" style="bottom: 0; right: 0;">
     </div>
   </div>
+  <!-- Active bird shown on screen center -->
+  <img id="activeBird" class="hud-bird" src="normal.bord.gif" alt="Main Bird">
 
   <script>
     const wrapper = document.getElementById("wrapper");
     const box = document.getElementById("box");
+    const bob = document.getElementById("bob");
+    const steven = document.getElementById("steven");
+    const activeBird = document.getElementById("activeBird");
 
-    // Initial camera center
     let camX = box.clientWidth / 2 - wrapper.clientWidth / 2;
     let camY = box.clientHeight / 2 - wrapper.clientHeight / 2;
     wrapper.scrollLeft = camX;
     wrapper.scrollTop = camY;
 
-    // Movement tracking
     const keys = {};
     window.addEventListener("keydown", (e) => {
       keys[e.key.toLowerCase()] = true;
@@ -72,11 +82,20 @@
       keys[e.key.toLowerCase()] = false;
     });
 
-    // Generate Cactus
+    bob.addEventListener("click", (e) => {
+      e.stopPropagation();
+      activeBird.src = "bob.png";
+    });
+
+    steven.addEventListener("click", (e) => {
+      e.stopPropagation();
+      activeBird.src = "Steven.png";
+    });
+
     function randomCactus() {
       const cactus = document.createElement("img");
       cactus.classList.add("cactus");
-      cactus.src = "Cactus.png"; // Capital C
+      cactus.src = "Cactus.png";
       cactus.alt = "Cactus";
       cactus.style.left = Math.floor(Math.random() * (box.clientWidth - 100)) + "px";
       cactus.style.top = Math.floor(Math.random() * (box.clientHeight - 100)) + "px";
@@ -87,10 +106,10 @@
 
     setInterval(randomCactus, 500);
 
-    // Drop poop from center
     function createDrop() {
       const drop = document.createElement("div");
       drop.classList.add("drop");
+
       const x = wrapper.scrollLeft + wrapper.clientWidth / 2 - 10;
       const y = wrapper.scrollTop + wrapper.clientHeight / 2 - 10;
       drop.style.left = x + "px";
@@ -131,7 +150,6 @@
       requestAnimationFrame(animateDrop);
     }
 
-    // Poop key
     document.addEventListener("keydown", (e) => {
       if (e.code === "Space") {
         e.preventDefault();
@@ -139,7 +157,6 @@
       }
     });
 
-    // Movement loop
     function gameLoop() {
       const speed = 10;
       if (keys["arrowup"] || keys["w"]) camY -= speed;
@@ -160,4 +177,3 @@
   </script>
 </body>
 </html>
-
