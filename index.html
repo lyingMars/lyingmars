@@ -92,21 +92,25 @@
       e.stopPropagation();
       activeBird.src = "Steven.png";
     });
+function randomCactus() {
+  const cactus = document.createElement("img");
+  cactus.classList.add("cactus");
+  cactus.src = "Cactus.png";
+  cactus.alt = "Cactus";
 
-    function randomCactus() {
-      const cactus = document.createElement("img");
-      cactus.classList.add("cactus");
-      cactus.src = "Cactus.png";
-      cactus.alt = "Cactus";
-      cactus.style.left = Math.floor(Math.random() * (box.clientWidth - 100)) + "px";
-      cactus.style.top = Math.floor(Math.random() * (box.clientHeight - 100)) + "px";
-      box.appendChild(cactus);
+  const viewWidth = wrapper.clientWidth;
+  const viewHeight = wrapper.clientHeight;
 
-      setTimeout(() => cactus.remove(), 30000);
-    }
+  // Generate positions within ±500px of current camera view
+  const x = camX + Math.random() * viewWidth - 50 + Math.random() * 1000 - 500;
+  const y = camY + Math.random() * viewHeight - 50 + Math.random() * 1000 - 500;
 
-    setInterval(randomCactus, 500);
+  cactus.style.left = Math.max(0, Math.min(x, box.clientWidth - 100)) + "px";
+  cactus.style.top = Math.max(0, Math.min(y, box.clientHeight - 100)) + "px";
+  box.appendChild(cactus);
 
+  setTimeout(() => cactus.remove(), 30000);
+}
     function createDrop() {
       const drop = document.createElement("div");
       drop.classList.add("drop");
