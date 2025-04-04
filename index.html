@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Center Bird Map</title>
+  <title>Bird Game</title>
   <style>
     body {
       margin: 0;
       background-color: #eee;
       overflow: hidden;
-      cursor: auto;
+      cursor: crosshair;
     }
     #wrapper {
       width: 100vw;
@@ -25,15 +25,15 @@
     }
     .hud-bird {
       position: fixed;
-      width: 100px;
-      height: 100px;
+      width: 200px;
+      height: 200px;
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);
       pointer-events: none;
       z-index: 10;
     }
-    .bird-select {
+    .bird-select, .item, .mob {
       position: absolute;
       width: 100px;
       height: 100px;
@@ -44,7 +44,6 @@
       width: 100px;
       height: 100px;
       pointer-events: none;
-      border: 2px solid red; /* Add red border for visibility */
     }
     .drop {
       position: absolute;
@@ -61,14 +60,12 @@
     </div>
   </div>
 
-  <!-- HUD bird (always in center) -->
+  <!-- HUD bird (always center) -->
   <img id="activeBird" class="hud-bird" src="normal.bord.gif" alt="Main Bird">
 
   <script>
     const wrapper = document.getElementById("wrapper");
     const box = document.getElementById("box");
-    const bob = document.getElementById("bob");
-    const steven = document.getElementById("steven");
     const activeBird = document.getElementById("activeBird");
 
     let camX = box.clientWidth / 2 - wrapper.clientWidth / 2;
@@ -76,86 +73,111 @@
     wrapper.scrollLeft = camX;
     wrapper.scrollTop = camY;
 
+    let aimingEnabled = false;
+
     const keys = {};
-    window.addEventListener("keydown", (e) => {
-      keys[e.key.toLowerCase()] = true;
-    });
-    window.addEventListener("keyup", (e) => {
-      keys[e.key.toLowerCase()] = false;
-    });
+    window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+    window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
-    bob.addEventListener("click", (e) => {
-      e.stopPropagation();
-      activeBird.src = "bob.png";
-    });
+    document.getElementById("bob").addEventListener("click", () => activeBird.src = "bob.png");
+    document.getElementById("steven").addEventListener("click", () => activeBird.src = "Steven.png");
 
-    steven.addEventListener("click", (e) => {
-      e.stopPropagation();
-      activeBird.src = "Steven.png";
-    });
-
-    function randomCactus() {
+    function spawnCactus() {
       const cactus = document.createElement("img");
       cactus.classList.add("cactus");
       cactus.src = "Cactus.png";
-      cactus.alt = "Cactus";
-
-      // Spawn within current visible screen area
-      const viewX = wrapper.scrollLeft;
-      const viewY = wrapper.scrollTop;
-      const viewW = wrapper.clientWidth;
-      const viewH = wrapper.clientHeight;
-
-      const x = viewX + Math.random() * (viewW - 100);
-      const y = viewY + Math.random() * (viewH - 100);
-
+      const x = wrapper.scrollLeft + Math.random() * (wrapper.clientWidth - 100);
+      const y = wrapper.scrollTop + Math.random() * (wrapper.clientHeight - 100);
       cactus.style.left = `${x}px`;
       cactus.style.top = `${y}px`;
       box.appendChild(cactus);
-
-      console.log("Cactus spawned at:", x, y);
-
       setTimeout(() => cactus.remove(), 30000);
     }
 
-    setInterval(randomCactus, 500);
+    function spawnItem(src) {
+      const item = document.createElement("img");
+      item.classList.add("item");
+      item.src = src;
+      const x = wrapper.scrollLeft + Math.random() * (wrapper.clientWidth - 100);
+      const y = wrapper.scrollTop + Math.random() * (wrapper.clientHeight - 100);
+      item.style.left = `${x}px`;
+      item.style.top = `${y}px`;
+      box.appendChild(item);
 
-    function createDrop() {
+      item.addEventListener("click", () => {
+        item.remove();
+        aimingEnabled = true;
+      });
+
+      setTimeout(() => item.remove(), 60000);
+    }
+
+    function spawnBlackCat() {
+      const cat = document.createElement("img");
+      cat.classList.add("mob");
+      cat.src = "CATBLACK MOB.gif";
+      const offset = 400;
+      const side = Math.floor(Math.random() * 4);
+      const viewX = wrapper.scrollLeft;
+      const viewY = wrapper.scrollTop;
+      const vw = wrapper.clientWidth;
+      const vh = wrapper.clientHeight;
+
+      let x, y;
+      switch (side) {
+        case 0: x = viewX - offset + Math.random() * offset; y = viewY + Math.random() * vh; break;
+        case 1: x = viewX + vw + Math.random() * offset; y = viewY + Math.random() * vh; break;
+        case 2: y = viewY - offset + Math.random() * offset; x = viewX + Math.random() * vw; break;
+        case 3: y = viewY + vh + Math.random() * offset; x = viewX + Math.random() * vw; break;
+      }
+
+      cat.style.left = `${Math.max(0, Math.min(x, box.clientWidth - 100))}px`;
+      cat.style.top = `${Math.max(0, Math.min(y, box.clientHeight - 100))}px`;
+      box.appendChild(cat);
+      setTimeout(() => cat.remove(), 30000);
+    }
+
+    setInterval(spawnCactus, 1000);
+    setInterval(() => spawnItem("mango.png"), 8000);
+    setInterval(() => spawnItem("pistach.png"), 12000);
+    setInterval(() => spawnItem("PISTACH@.png"), 15000);
+    setInterval(spawnBlackCat, 7000);
+
+    function createDrop(x, y, dx = -100, dy = 100) {
       const drop = document.createElement("div");
       drop.classList.add("drop");
       drop.textContent = "💩";
-
-      const x = wrapper.scrollLeft + wrapper.clientWidth / 2 - 10;
-      const y = wrapper.scrollTop + wrapper.clientHeight / 2 - 10;
-      drop.style.left = x + "px";
-      drop.style.top = y + "px";
+      drop.style.left = `${x}px`;
+      drop.style.top = `${y}px`;
       box.appendChild(drop);
 
       let start = null;
       const duration = 2000;
-      const endX = x - 100;
-      const endY = y + 100;
+      const endX = x + dx;
+      const endY = y + dy;
 
       function animateDrop(timestamp) {
         if (!start) start = timestamp;
         const progress = Math.min((timestamp - start) / duration, 1);
+        const currX = x + (endX - x) * progress;
+        const currY = y + (endY - y) * progress;
 
-        drop.style.left = x + (endX - x) * progress + "px";
-        drop.style.top = y + (endY - y) * progress + "px";
+        drop.style.left = `${currX}px`;
+        drop.style.top = `${currY}px`;
 
         if (progress < 1) {
           requestAnimationFrame(animateDrop);
         } else {
           const dropRect = drop.getBoundingClientRect();
-          document.querySelectorAll('.cactus').forEach(cactus => {
-            const cactusRect = cactus.getBoundingClientRect();
+          document.querySelectorAll('.cactus, .mob').forEach(obj => {
+            const rect = obj.getBoundingClientRect();
             if (
-              dropRect.left < cactusRect.right &&
-              dropRect.right > cactusRect.left &&
-              dropRect.top < cactusRect.bottom &&
-              dropRect.bottom > cactusRect.top
+              dropRect.left < rect.right &&
+              dropRect.right > rect.left &&
+              dropRect.top < rect.bottom &&
+              dropRect.bottom > rect.top
             ) {
-              cactus.remove();
+              obj.remove();
             }
           });
           drop.remove();
@@ -166,10 +188,23 @@
     }
 
     document.addEventListener("keydown", (e) => {
-      if (e.code === "Space") {
+      if (e.code === "Space" && !aimingEnabled) {
         e.preventDefault();
-        createDrop();
+        const x = wrapper.scrollLeft + wrapper.clientWidth / 2 - 10;
+        const y = wrapper.scrollTop + wrapper.clientHeight / 2 - 10;
+        createDrop(x, y);
       }
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!aimingEnabled) return;
+      const targetX = e.clientX + wrapper.scrollLeft;
+      const targetY = e.clientY + wrapper.scrollTop;
+      const centerX = wrapper.scrollLeft + wrapper.clientWidth / 2 - 10;
+      const centerY = wrapper.scrollTop + wrapper.clientHeight / 2 - 10;
+      const dx = targetX - centerX;
+      const dy = targetY - centerY;
+      createDrop(centerX, centerY, dx, dy);
     });
 
     function gameLoop() {
