@@ -223,6 +223,26 @@
       cat.style.top = `${Math.max(0, Math.min(y, box.clientHeight - 100))}px`;
       box.appendChild(cat);
     }
+    function handleMangoEffect() {
+    // Change bird icon to zoom.bord.gif for 3 seconds
+    activeBird.src = "zoom.bord.gif";
+
+    // Increase the movement speed
+    const originalSpeed = 10;  // Default speed
+    const boostedSpeed = 15;   // Boosted speed
+
+    // Set speed to boosted speed for 3 seconds
+    let currentSpeed = boostedSpeed;
+
+    // Revert after 3 seconds
+    setTimeout(() => {
+        currentSpeed = originalSpeed; // Reset the speed
+        activeBird.src = "normal.bord.gif"; // Reset the bird icon
+    }, 3000);
+
+    // Function to update movement speed in game loop
+    return currentSpeed;
+}
 
     function createDrop(x, y, dx = -100, dy = 100) {
       const drop = document.createElement("div");
@@ -301,11 +321,33 @@
 
     function gameLoop() {
       if (!paused) {
-        const speed = 10;
-        if (keys["arrowup"] || keys["w"]) camY -= speed;
-        if (keys["arrowdown"] || keys["s"]) camY += speed;
-        if (keys["arrowleft"] || keys["a"]) camX -= speed;
-        if (keys["arrowright"] || keys["d"]) camX += speed;
+       let movementSpeed = 10; // Default speed
+
+document.querySelectorAll('.item').forEach(item => {
+    const rect = item.getBoundingClientRect();
+    const centerX = wrapper.clientWidth / 2;
+    const centerY = wrapper.clientHeight / 2;
+
+    if (
+        centerX > rect.left &&
+        centerX < rect.right &&
+        centerY > rect.top &&
+        centerY < rect.bottom
+    ) {
+        item.remove();
+        
+        // Check if Mango was collected
+        if (item.src.includes("mango.png")) {
+            movementSpeed = handleMangoEffect();
+        }
+    }
+});
+
+// Update movement speed in game loop based on the Mango effect
+if (keys["arrowup"] || keys["w"]) camY -= movementSpeed;
+if (keys["arrowdown"] || keys["s"]) camY += movementSpeed;
+if (keys["arrowleft"] || keys["a"]) camX -= movementSpeed;
+if (keys["arrowright"] || keys["d"]) camX += movementSpeed;
 
         camX = Math.max(0, Math.min(camX, box.clientWidth - wrapper.clientWidth));
         camY = Math.max(0, Math.min(camY, box.clientHeight - wrapper.clientHeight));
